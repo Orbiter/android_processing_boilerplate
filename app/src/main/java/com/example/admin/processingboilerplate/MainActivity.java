@@ -49,10 +49,6 @@ public class MainActivity extends AppCompatActivity {
     public static JSONObject client_info = null;
     public static PFont font = null;
 
-    public static class Button {
-        int x, y, w, h;
-        String name;
-    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -69,6 +65,7 @@ public class MainActivity extends AppCompatActivity {
         int num = 2000;
         int range = 24;
         int fontsize = 16;
+        long t = System.currentTimeMillis();
 
         float[] ax = new float[num];
         float[] ay = new float[num];
@@ -78,9 +75,10 @@ public class MainActivity extends AppCompatActivity {
         @Override
         public void settings() {
             fullScreen();
-            size(width, height, P2D);
+            size(width, height, JAVA2D);
             for (String font: PFont.list()) Log.d("setup", "font = " + font);
             if (font == null) font = createFont("DroidSansMono.ttf", fontsize * 2, true);
+            noSmooth();
         }
 
         @Override
@@ -89,7 +87,7 @@ public class MainActivity extends AppCompatActivity {
                 ax[i] = width/2;
                 ay[i] = height/2;
             }
-            frameRate(8);
+            frameRate(200);
         }
 
         @Override
@@ -101,6 +99,11 @@ public class MainActivity extends AppCompatActivity {
             textFont(font, fontsize * 2);
             fill(128, 255, 128);
             text("Processing / Network Boilerplate", 10, fontsize * 4);
+
+            // print out the frame rate
+            textFont(font, fontsize);
+            text("frame rate: " + this.frameRate + ", gap time: " + (System.currentTimeMillis() - t), 10, height - fontsize);
+            t = System.currentTimeMillis();
 
             // draw lines
             System.arraycopy(ax, 1, ax, 0, num - 1);
