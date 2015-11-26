@@ -81,7 +81,7 @@ public class MainActivity extends AppCompatActivity {
         @Override
         public void settings() {
             fullScreen();
-            size(width, height, P2D);
+            size(width, height, JAVA2D);
             for (String font: PFont.list()) Log.d("setup", "font = " + font);
             if (font == null) font = createFont("DroidSansMono.ttf", fontsize * 2, true);
         }
@@ -92,7 +92,7 @@ public class MainActivity extends AppCompatActivity {
                 ax[i] = width/2;
                 ay[i] = height/2;
             }
-            frameRate(8);
+            frameRate(200);
         }
 
         @Override
