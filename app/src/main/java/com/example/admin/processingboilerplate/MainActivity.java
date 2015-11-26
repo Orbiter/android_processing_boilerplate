@@ -27,9 +27,6 @@ package com.example.admin.processingboilerplate;
 import android.annotation.TargetApi;
 import android.app.Fragment;
 import android.app.FragmentManager;
-import android.content.Context;
-import android.net.ConnectivityManager;
-import android.net.NetworkInfo;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
@@ -68,10 +65,6 @@ public class MainActivity extends AppCompatActivity {
         FragmentManager fragmentManager = getFragmentManager();
         Fragment fragment = new Sketch();
         fragmentManager.beginTransaction().replace(R.id.container, fragment).commit();
-        // check network connection
-        ConnectivityManager cm = (ConnectivityManager) getApplicationContext().getSystemService(Context.CONNECTIVITY_SERVICE);
-        NetworkInfo info = cm.getActiveNetworkInfo();
-        Log.d("Info", "Connection Type = " + info.getType() + ", subtype = " + info.getSubtype());
     }
 
     public static class Sketch extends PApplet {
@@ -88,7 +81,7 @@ public class MainActivity extends AppCompatActivity {
         @Override
         public void settings() {
             fullScreen();
-            size(width, height, JAVA2D);
+            size(width, height, P2D);
             for (String font: PFont.list()) Log.d("setup", "font = " + font);
             if (font == null) font = createFont("DroidSansMono.ttf", fontsize * 2, true);
         }
@@ -100,7 +93,6 @@ public class MainActivity extends AppCompatActivity {
                 ay[i] = height/2;
             }
             frameRate(8);
-            Log.d("Info", "Build.FINGERPRINT = " + Build.FINGERPRINT);
         }
 
         @Override
