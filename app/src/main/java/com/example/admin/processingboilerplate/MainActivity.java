@@ -27,6 +27,9 @@ package com.example.admin.processingboilerplate;
 import android.annotation.TargetApi;
 import android.app.Fragment;
 import android.app.FragmentManager;
+import android.content.Context;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
@@ -56,6 +59,7 @@ public class MainActivity extends AppCompatActivity {
     // defined as global static objects to prevent that they are computed again when device is turned
     public static JSONObject client_info = null;
     public static PFont font = null;
+    private static Context context;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -65,6 +69,15 @@ public class MainActivity extends AppCompatActivity {
         FragmentManager fragmentManager = getFragmentManager();
         Fragment fragment = new Sketch();
         fragmentManager.beginTransaction().replace(R.id.container, fragment).commit();
+
+        // detect device type
+        context = this.getApplicationContext();
+    }
+
+    public static boolean isConnectedWifi() {
+        ConnectivityManager cm = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo networkInfo = cm == null ? null : cm.getActiveNetworkInfo();
+        return (networkInfo != null && networkInfo.isConnected() && networkInfo.getType() == ConnectivityManager.TYPE_WIFI);
     }
 
     public static class Sketch extends PApplet {
@@ -148,6 +161,16 @@ public class MainActivity extends AppCompatActivity {
                     Log.e("drawData", e.getMessage(), e);
                 }
             }
+
+            textFont(font, fontsize);
+            fill(255, 255, 255);
+            ConnectivityManager cm = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
+            NetworkInfo networkInfo = cm == null ? null : cm.getActiveNetworkInfo();
+            if (networkInfo == null) {
+                text("Network Info: no network info available", 10, height - 2 * fontsize);
+            } else {
+                text("Network Info: type = " + networkInfo.getType() + ", subtype = " + networkInfo.getSubtype() + (isConnectedWifi() ? ", wifi connected" : ""), 10, height - 2 * fontsize);
+            }
         }
 
         @Override
@@ -161,7 +184,7 @@ public class MainActivity extends AppCompatActivity {
             dataView = true;
             if (client_info != null) return;
             Log.d("loadData", "started");
-            JSONObject json = loadJson("http://loklak.org/api/status.json");
+            JSONObject json = JsonIO.loadJson("http://loklak.org/api/status.json");
             Log.d("loadData", "loaded, " + json.length() + " objects");
             if (json != null) try {
                 client_info = json.getJSONObject("client_info");
@@ -172,47 +195,4 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    public static JSONObject loadJson(String url) {
-        StringBuilder sb = loadString(url);
-        if (sb == null || sb.length() == 0) return new JSONObject();
-        JSONObject json = null;
-        try {
-            json = new JSONObject(sb.toString());
-            return json;
-        } catch (JSONException e) {
-            Log.e("loadJson", e.getMessage(), e);
-            return new JSONObject();
-        }
-    }
-
-    public static StringBuilder loadString(String url) {
-        StringBuilder sb = new StringBuilder();
-        try {
-            URLConnection uc = (new URL(url)).openConnection();
-            HttpURLConnection con = url.startsWith("https") ? (HttpsURLConnection) uc : (HttpURLConnection) uc;
-            con.setReadTimeout(6000);
-            con.setConnectTimeout(6000);
-            con.setRequestMethod("GET");
-            con.setDoInput(true);
-            con.setRequestProperty("User-Agent", "Mozilla/5.0 (Macintosh; U; Intel Mac OS X 10.4; en-US; rv:1.9.2.2) Gecko/20100316 Firefox/3.6.2");
-            BufferedReader br = null;
-            try {
-                br = new BufferedReader(new InputStreamReader(con.getInputStream(), "UTF-8"));
-                String s;
-                while ((s = br.readLine()) != null) sb.append(s).append('\n');
-            } catch (IOException e) {
-                Log.e("loadJson", e.getMessage(), e);
-            } finally {
-                try {
-                    if (br != null) br.close();
-                    con.disconnect();
-                } catch (IOException e) {
-                    Log.e("loadJson", e.getMessage(), e);
-                }
-            }
-        } catch (IOException e) {
-            Log.e("loadJson", e.getMessage(), e);
-        }
-        return sb;
-    }
 }
