@@ -86,7 +86,6 @@ public class MainActivity extends AppCompatActivity {
         int range = 24;
         int fontsize = 16;
         Buttons buttons;
-        int framerate = 12;
 
         float[] ax = new float[num];
         float[] ay = new float[num];
@@ -98,7 +97,9 @@ public class MainActivity extends AppCompatActivity {
             fullScreen();
             size(width, height, JAVA2D);
             for (String font: PFont.list()) Log.d("setup", "font = " + font);
-            if (font == null) font = createFont("DroidSansMono.ttf", fontsize * 2, true);
+            fontsize = Math.min(width, height) / 38; // computes to a font size of 20 for a 768 width
+            if (font == null) font = createFont("DroidSansMono.ttf", fontsize * 4, true); // at a height of 20, this font has a width of 12
+            // with this settings, we have exactly space for 64 characters on a horizontal-oriented phone
         }
 
         @Override
@@ -107,26 +108,50 @@ public class MainActivity extends AppCompatActivity {
                 ax[i] = width/2;
                 ay[i] = height/2;
             }
-            frameRate(framerate);
+            frameRate(200);
             buttons = new Buttons(this);
             Buttons.Button testButton = buttons.createButton();
             testButton
                     .setCenter(width / 2, 3 * height / 4)
-                    .setRadius(fontsize * 7)
+                    .setWidth(fontsize * 9)
                     .setFontsize(fontsize)
                     .setOffText("PRESS", "TO", "START")
                     .setOnText("PRESS", "TO", "STOP")
                     .setBorderWidth(8)
                     .setBorderColor(128, 128, 128)
-                    .setOnColor(64, 255, 128)
+                    .setOnColor(32, 128, 64)
                     .setOffColor(64, 0, 128)
                     .setTextColor(255, 255, 255)
-                    .setSpeed(512 / framerate);
+                    .setTransitionTime(300);
+            Buttons.Button toggleVisibleButton = (Buttons.Button) testButton.clone();
+            toggleVisibleButton
+                    .setCenter(width / 3, 3 * height / 4)
+                    .setWidth(fontsize * 7)
+                    .setOnColor(0, 128, 0)
+                    .setOffColor(0, 0, 0)
+                    .setOffText("SHOW", "CENTER", "BUTTON")
+                    .setOnText("HIDE", "CENTER", "BUTTON")
+                    .setStatus(255);
+            Buttons.Button toggleEnableButton = (Buttons.Button) testButton.clone();
+            toggleEnableButton
+                    .setCenter(2 * width / 3, 3 * height / 4)
+                    .setWidth(fontsize * 7)
+                    .setOnColor(0, 128, 0)
+                    .setOffColor(0, 0, 0)
+                    .setOffText("ENABLE", "CENTER", "BUTTON")
+                    .setOnText("DISABLE", "CENTER", "BUTTON")
+                    .setStatus(255);
+            buttons.addButton("visible", toggleVisibleButton);
+            buttons.addButton("enable", toggleEnableButton);
             buttons.addButton("test", testButton);
         }
 
         @Override
         public void draw() {
+
+            // react on button status
+            if (buttons.getStatus("visible") == 255) buttons.getButton("test").visible(); else buttons.getButton("test").invisible();
+            if (buttons.getStatus("enable") == 255) buttons.getButton("test").enable(); else buttons.getButton("test").disable();
 
             // make a background
             translate(0, 0);
@@ -137,7 +162,7 @@ public class MainActivity extends AppCompatActivity {
             textAlign(LEFT, TOP);
             textFont(font, fontsize * 2);
             fill(128, 255, 128);
-            text("Processing / Network Boilerplate", 10, fontsize * 4);
+            text("Processing / Network Boilerplate", 10, fontsize);
 
             // draw lines
             System.arraycopy(ax, 1, ax, 0, num - 1);
@@ -161,7 +186,7 @@ public class MainActivity extends AppCompatActivity {
 
             // if data was loaded, print it on the screen
             textFont(font, fontsize);
-            int y = fontsize * 8;
+            int y = fontsize * 3;
             for (Map.Entry<Object, Object> entry : System.getProperties().entrySet()) {
                 fill(128, 0, 0); text(entry.getKey().toString(), 10, y);
                 fill(0, 0, 128); text(entry.getValue().toString(), 180, y);
@@ -171,6 +196,10 @@ public class MainActivity extends AppCompatActivity {
             fill(128, 0, 0); text("device", 10, y); fill(0, 0, 128); text(Build.DEVICE, 180, y); y += fontsize;
             fill(128, 0, 0); text("model", 10, y); fill(0, 0, 128); text(Build.MODEL, 180, y); y += fontsize;
             fill(128, 0, 0); text("product", 10, y); fill(0, 0, 128); text(Build.PRODUCT, 180, y); y += fontsize;
+            fill(128, 0, 0); text("width", 10, y); fill(0, 0, 128); text(width, 180, y); y += fontsize;
+            fill(128, 0, 0); text("height", 10, y); fill(0, 0, 128); text(height, 180, y); y += fontsize;
+            fill(128, 0, 0); text("fontsize", 10, y); fill(0, 0, 128); text(fontsize, 180, y); y += fontsize;
+            fill(128, 0, 0); text("fontwidth", 10, y); fill(0, 0, 128); text(textWidth('X'), 180, y); y += fontsize;
             if (client_info != null) {
                 Iterator<String> i = client_info.keys();
                 textSize(fontsize);
@@ -193,7 +222,7 @@ public class MainActivity extends AppCompatActivity {
             } else {
                 text("Network Info: type = " + networkInfo.getType() + ", subtype = " + networkInfo.getSubtype() + (isConnectedWifi() ? ", wifi connected" : ""), 10, height - 2 * fontsize);
             }
-            text("Frame rate: " + frameRate + ", button is " + (buttons.getStatus("test") == 0 ? "off" : "on"), 10, height - fontsize);
+            text("Frame rate: " + frameRate + ", button is " + (buttons.getStatus("test") == 255 ? "on" : "off"), 10, height - fontsize);
             // draw the buttons (always at last to make them visible at all cost)
             buttons.draw();
         }

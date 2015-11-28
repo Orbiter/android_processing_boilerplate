@@ -1,20 +1,36 @@
+/**
+ *  Buttons
+ *  Copyright 28.11.2015 by Michael Peter Christen, @0rb1t3r
+ *
+ *  This library is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU Lesser General Public
+ *  License as published by the Free Software Foundation; either
+ *  version 2.1 of the License, or (at your option) any later version.
+ *
+ *  This library is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *  Lesser General Public License for more details.
+ *
+ *  You should have received a copy of the GNU Lesser General Public License
+ *  along with this program in the file lgpl21.txt
+ *  If not, see <http://www.gnu.org/licenses/>.
+ */
+
 package com.example.admin.processingboilerplate;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.LinkedHashMap;
 
 import processing.core.PApplet;
 
 public class Buttons {
 
     private PApplet sketch;
-    private Map<String, Button> buttons;
+    private LinkedHashMap<String, Button> buttons;
 
     public Buttons(PApplet sketch) {
         this.sketch = sketch;
-        this.buttons = new HashMap<String, Button>();
+        this.buttons = new LinkedHashMap<String, Button>();
     }
 
     public Button createButton() {
@@ -23,6 +39,10 @@ public class Buttons {
 
     public void addButton(String name, Button button) {
         this.buttons.put(name, button);
+    }
+
+    public Button getButton(String name) {
+        return this.buttons.get(name);
     }
 
     public int getStatus(String name) {
@@ -40,29 +60,35 @@ public class Buttons {
 
     public static class Button {
         private PApplet sketch;
-        int x, y, g, fontsize = 24, r = 5 * fontsize;
+        int x, y, fontsize = 24, width = 5 * fontsize;
+        int tt = 500;
         int borderWidth = 1;
         int col_r_text = 0, col_g_text  = 0, col_b_text = 0;
         int col_r_border = 0, col_g_border = 0, col_b_border = 0;
         int col_r_on = 0, col_g_on = 255, col_b_on = 0;
         int col_r_off = 255, col_g_off = 0, col_b_off = 0;
+        int col_r_disabled = 128, col_g_disabled = 128, col_b_disabled = 128;
         String offtext0 = "", offtext1 = "SWITCH ON", offtext2 = "";
         String ontext0 = "", ontext1 = "SWITCH OFF", ontext2 = "";
-        int status, delta;
+        int status, sign;
+        boolean disabled, visible;
 
         private Button(PApplet sketch) {
             this.sketch = sketch;
-            this.status = 0; this.delta = 0;
+            this.status = 0; this.sign = 0;
+            this.visible = true;
+            this.disabled = false;
         }
 
         public Object clone() {
             Button b = new Button(this.sketch);
-            b.x = this.x; b.y = this.y; b.g = this.g; b.fontsize = this.fontsize; b.r = this.r;
+            b.x = this.x; b.y = this.y; b.tt = this.tt; b.fontsize = this.fontsize; b.width = this.width;
             b.borderWidth = this.borderWidth;
             b.col_r_text = this.col_r_text; b.col_g_text = this.col_g_text; b.col_b_text = this.col_b_text;
             b.col_r_border = this.col_r_border; b.col_g_border = this.col_g_border; b.col_b_border = this.col_b_border;
             b.col_r_on = this.col_r_on; b.col_g_on = this.col_g_on; b.col_b_on = this.col_b_on;
             b.col_r_off = this.col_r_off; b.col_g_off = this.col_g_off; b.col_b_off = this.col_b_off;
+            b.col_r_disabled = this.col_r_disabled; b.col_g_disabled = this.col_g_disabled; b.col_b_disabled = this.col_b_disabled;
             b.ontext0 = this.ontext0; b.ontext1 = this.ontext1; b.ontext2 = this.ontext2;
             b.offtext0 = this.offtext0; b.offtext1 = this.offtext1; b.offtext2 = this.offtext2;
             return b;
@@ -73,13 +99,41 @@ public class Buttons {
             return this;
         }
 
-        public Button setRadius(int r) {
-            this.r = r;
+        public Button setWidth(int width) {
+            this.width = width;
             return this;
         }
 
-        public Button setSpeed(int speed) {
-            this.g = speed;
+        public Button visible() {
+            this.visible = true;
+            return this;
+        }
+
+        public Button invisible() {
+            this.visible = false;
+            return this;
+        }
+
+        public boolean isVisible() {
+            return this.visible;
+        }
+
+        public Button disable() {
+            this.disabled = true;
+            return this;
+        }
+
+        public Button enable() {
+            this.disabled = false;
+            return this;
+        }
+
+        public boolean isEnabled() {
+            return !this.disabled;
+        }
+
+        public Button setTransitionTime(int milliseconds) {
+            this.tt = milliseconds;
             return this;
         }
 
@@ -95,6 +149,11 @@ public class Buttons {
 
         public Button setOffColor(int r, int g, int b) {
             this.col_r_off = r; this.col_g_off = g; this.col_b_off = b;
+            return this;
+        }
+
+        public Button setDisabledColor(int r, int g, int b) {
+            this.col_r_disabled = r; this.col_g_disabled = g; this.col_b_disabled = b;
             return this;
         }
 
@@ -124,50 +183,59 @@ public class Buttons {
         }
 
         public void draw() {
-            // change delta
-            if (this.delta != 0) {
-                this.status = Math.max(0, Math.min(255, this.status + this.delta * g));
-                if (this.status == 0 || this.status == 255) this.delta = 0;
+            // change sign
+            if (this.sign != 0) {
+                this.status = Math.max(0, Math.min(255, this.status + (int) (this.sign * 255000 / this.tt / this.sketch.frameRate)));
+                if (this.status == 0 || this.status == 255) this.sign = 0;
             }
-            // draw button
-            if (borderWidth == 0) sketch.noStroke(); else {
-                sketch.stroke(col_r_border, col_g_border, col_b_border);
-                sketch.strokeWeight(borderWidth);
-            }
-            if (this.delta == 0) {
-                if (this.status == 0) {
-                    sketch.fill(col_r_off, col_g_off, col_b_off);
-                } else if (this.status == 255) {
-                    sketch.fill(col_r_on, col_g_on, col_b_on);
+            if (this.visible) {
+                // draw button
+                if (borderWidth == 0) sketch.noStroke();
+                else {
+                    sketch.stroke(col_r_border, col_g_border, col_b_border);
+                    sketch.strokeWeight(borderWidth);
                 }
-                sketch.arc(x, y, r, r, 0, sketch.TWO_PI);
-            } else {
-                sketch.fill(col_r_off, col_g_off, col_b_off);
-                sketch.arc(x, y, r, r, 0, sketch.TWO_PI);
-                sketch.noStroke();
-                sketch.fill(col_r_on, col_g_on, col_b_on);
-                sketch.arc(x, y, r * status / 255, r * status / 255, 0, sketch.TWO_PI);
-            }
-            // draw text lines
-            if (this.delta == 0) {
-                sketch.fill(col_r_text, col_g_text, col_b_text);
-                sketch.textSize(fontsize);
-                sketch.textAlign(sketch.CENTER, sketch.CENTER);
-                if (this.status == 0) {
-                    sketch.text(offtext0, x, y - fontsize);
-                    sketch.text(offtext1, x, y);
-                    sketch.text(offtext2, x, y + fontsize);
-                } else if (this.status == 255) {
-                    sketch.text(ontext0, x, y - fontsize);
-                    sketch.text(ontext1, x, y);
-                    sketch.text(ontext2, x, y + fontsize);
-                }
-            }
+                if (this.sign == 0 || this.disabled) {
+                    // display button final status
+                    if (this.disabled) {
+                        sketch.fill(col_r_disabled, col_g_disabled, col_b_disabled);
+                    } else if (this.status == 0) {
+                        sketch.fill(col_r_off, col_g_off, col_b_off);
+                    } else if (this.status == 255) {
+                        sketch.fill(col_r_on, col_g_on, col_b_on);
+                    }
+                    sketch.arc(x, y, width, width, 0, sketch.TWO_PI);
 
+                    // draw text lines
+                    sketch.fill(col_r_text, col_g_text, col_b_text);
+                    sketch.textSize(fontsize);
+                    sketch.textAlign(sketch.CENTER, sketch.CENTER);
+                    if (this.status == 0) {
+                        sketch.text(offtext0, x, y - fontsize);
+                        sketch.text(offtext1, x, y);
+                        sketch.text(offtext2, x, y + fontsize);
+                    } else if (this.status == 255) {
+                        sketch.text(ontext0, x, y - fontsize);
+                        sketch.text(ontext1, x, y);
+                        sketch.text(ontext2, x, y + fontsize);
+                    }
+                } else {
+                    // transition animation
+                    sketch.fill(col_r_off, col_g_off, col_b_off);
+                    sketch.arc(x, y, width, width, 0, sketch.TWO_PI);
+                    sketch.noStroke();
+                    sketch.fill(col_r_on, col_g_on, col_b_on);
+                    sketch.arc(x, y, width * status / 255, width * status / 255, 0, sketch.TWO_PI);
+                }
+            }
         }
 
-        public void setStatus(int status, int delta) {
-            this.status = status; this.delta = delta;
+        public void setStatus(int status) {
+            this.status = status; this.sign = 0;
+        }
+
+        public void setStatus(int status, int sign) {
+            this.status = status; this.sign = sign;
         }
 
         /**
@@ -184,12 +252,12 @@ public class Buttons {
             int xd = this.x - x;
             int yd = this.y - y;
             int distance = (int) Math.sqrt(xd * xd + yd * yd); // pythagoras!
-            return distance < this.r;
+            return distance * 2 < this.width;
         }
 
         public void mousePressed(int x, int y) {
-            if (inside(x, y)) {
-                if (this.delta == 0) this.delta = this.status == 0 ? 1 : -1; else this.delta = -this.delta;
+            if (this.visible && !this.disabled && inside(x, y)) {
+                if (this.sign == 0) this.sign = this.status == 0 ? 1 : -1; else this.sign = -this.sign;
             }
         }
 
