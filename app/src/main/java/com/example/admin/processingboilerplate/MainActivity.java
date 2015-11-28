@@ -85,6 +85,8 @@ public class MainActivity extends AppCompatActivity {
         int num = 2000;
         int range = 24;
         int fontsize = 16;
+        Buttons buttons;
+        int framerate = 12;
 
         float[] ax = new float[num];
         float[] ay = new float[num];
@@ -105,15 +107,34 @@ public class MainActivity extends AppCompatActivity {
                 ax[i] = width/2;
                 ay[i] = height/2;
             }
-            frameRate(200);
+            frameRate(framerate);
+            buttons = new Buttons(this);
+            Buttons.Button testButton = buttons.createButton();
+            testButton
+                    .setCenter(width / 2, 3 * height / 4)
+                    .setRadius(fontsize * 7)
+                    .setFontsize(fontsize)
+                    .setOffText("PRESS", "TO", "START")
+                    .setOnText("PRESS", "TO", "STOP")
+                    .setBorderWidth(8)
+                    .setBorderColor(128, 128, 128)
+                    .setOnColor(64, 255, 128)
+                    .setOffColor(64, 0, 128)
+                    .setTextColor(255, 255, 255)
+                    .setSpeed(512 / framerate);
+            buttons.addButton("test", testButton);
         }
 
         @Override
         public void draw() {
+
             // make a background
+            translate(0, 0);
             background(0, 128, 64);
 
             // draw a headline
+
+            textAlign(LEFT, TOP);
             textFont(font, fontsize * 2);
             fill(128, 255, 128);
             text("Processing / Network Boilerplate", 10, fontsize * 4);
@@ -125,6 +146,7 @@ public class MainActivity extends AppCompatActivity {
             ax[num-1] = constrain(ax[num-1] + random(-range, range), 0, width);
             ay[num-1] = constrain(ay[num-1] + random(-range, range), 0, height);
 
+            strokeWeight(3);
             for(int i=1; i<num; i++) {
                 float val = ((float)i) / num * 204.0f + 51;
                 stroke(val);
@@ -171,10 +193,16 @@ public class MainActivity extends AppCompatActivity {
             } else {
                 text("Network Info: type = " + networkInfo.getType() + ", subtype = " + networkInfo.getSubtype() + (isConnectedWifi() ? ", wifi connected" : ""), 10, height - 2 * fontsize);
             }
+            text("Frame rate: " + frameRate + ", button is " + (buttons.getStatus("test") == 0 ? "off" : "on"), 10, height - fontsize);
+            // draw the buttons (always at last to make them visible at all cost)
+            buttons.draw();
         }
 
         @Override
-        public void mousePressed() {ax[num-1] = mouseX; ay[num-1] = mouseY;}
+        public void mousePressed() {
+            ax[num-1] = mouseX; ay[num-1] = mouseY;
+            buttons.mousePressed(mouseX, mouseY);
+        }
 
         @Override
         public void mouseDragged() {ax[num-1] = mouseX; ay[num-1] = mouseY;}
