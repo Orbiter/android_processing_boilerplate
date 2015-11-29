@@ -28,6 +28,8 @@ import android.annotation.TargetApi;
 import android.app.Fragment;
 import android.app.FragmentManager;
 import android.content.Context;
+import android.media.AudioManager;
+import android.media.MediaPlayer;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.Build;
@@ -39,16 +41,8 @@ import android.view.WindowManager;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
-import java.net.URL;
-import java.net.URLConnection;
 import java.util.Iterator;
 import java.util.Map;
-
-import javax.net.ssl.HttpsURLConnection;
 
 import processing.core.PApplet;
 import processing.core.PFont;
@@ -122,7 +116,8 @@ public class MainActivity extends AppCompatActivity {
                     .setOnColor(32, 128, 64)
                     .setOffColor(64, 0, 128)
                     .setTextColor(255, 255, 255)
-                    .setTransitionTime(300);
+                    .setTransitionTime(300)
+                    .setStatus(0);
             Buttons.Button toggleVisibleButton = (Buttons.Button) testButton.clone();
             toggleVisibleButton
                     .setCenter(width / 3, 3 * height / 4)
@@ -144,6 +139,15 @@ public class MainActivity extends AppCompatActivity {
             buttons.addButton("visible", toggleVisibleButton);
             buttons.addButton("enable", toggleEnableButton);
             buttons.addButton("test", testButton);
+            Buttons.Button soundButton = (Buttons.Button) testButton.clone();
+            soundButton
+                    .setCenter(width / 2, height / 2)
+                    .setWidth(fontsize * 7)
+                    .setOnColor(128, 128, 0)
+                    .setOffText("PLAY", "TEST", "SOUND")
+                    .setOnText("", "", "")
+                    .setStatus(0);
+            buttons.addButton("sound", soundButton);
         }
 
         @Override
@@ -152,6 +156,9 @@ public class MainActivity extends AppCompatActivity {
             // react on button status
             if (buttons.getStatus("visible") == 255) buttons.getButton("test").visible(); else buttons.getButton("test").invisible();
             if (buttons.getStatus("enable") == 255) buttons.getButton("test").enable(); else buttons.getButton("test").disable();
+            if (buttons.getButton("sound").isActivated()) play(R.raw.ding);
+            if (buttons.getStatus("sound") == 255)  buttons.getButton("sound").setStatus(0);
+
 
             // make a background
             translate(0, 0);
@@ -235,6 +242,19 @@ public class MainActivity extends AppCompatActivity {
 
         @Override
         public void mouseDragged() {ax[num-1] = mouseX; ay[num-1] = mouseY;}
+
+        public static void play(int soundID) {
+            AudioManager am = (AudioManager) context.getSystemService(Context.AUDIO_SERVICE);
+            if (am.getRingerMode() == AudioManager.RINGER_MODE_NORMAL) {
+                MediaPlayer mp = MediaPlayer.create(context, soundID);
+                mp.start();
+                mp.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
+                    public void onCompletion(MediaPlayer mp) {
+                        mp.release();
+                    }
+                });
+            }
+        }
 
         public void loadData() {
             if (dataView) return;

@@ -60,24 +60,27 @@ public class Buttons {
 
     public static class Button {
         private PApplet sketch;
-        int x, y, fontsize = 24, width = 5 * fontsize;
-        int tt = 500;
-        int borderWidth = 1;
-        int col_r_text = 0, col_g_text  = 0, col_b_text = 0;
-        int col_r_border = 0, col_g_border = 0, col_b_border = 0;
-        int col_r_on = 0, col_g_on = 255, col_b_on = 0;
-        int col_r_off = 255, col_g_off = 0, col_b_off = 0;
-        int col_r_disabled = 128, col_g_disabled = 128, col_b_disabled = 128;
-        String offtext0 = "", offtext1 = "SWITCH ON", offtext2 = "";
-        String ontext0 = "", ontext1 = "SWITCH OFF", ontext2 = "";
-        int status, sign;
-        boolean disabled, visible;
+        private int x, y, fontsize = 24, width = 5 * fontsize;
+        private int tt = 500;
+        private int borderWidth = 1;
+        private int col_r_text = 0, col_g_text  = 0, col_b_text = 0;
+        private int col_r_border = 0, col_g_border = 0, col_b_border = 0;
+        private int col_r_on = 0, col_g_on = 255, col_b_on = 0;
+        private int col_r_off = 255, col_g_off = 0, col_b_off = 0;
+        private int col_r_disabled = 128, col_g_disabled = 128, col_b_disabled = 128;
+        private String offtext0 = "", offtext1 = "SWITCH ON", offtext2 = "";
+        private String ontext0 = "", ontext1 = "SWITCH OFF", ontext2 = "";
+        private int status, sign;
+        private boolean disabled, visible;
+        private boolean activated, deactivated;
 
         private Button(PApplet sketch) {
             this.sketch = sketch;
             this.status = 0; this.sign = 0;
             this.visible = true;
             this.disabled = false;
+            this.activated = false;
+            this.deactivated = false;
         }
 
         public Object clone() {
@@ -116,6 +119,28 @@ public class Buttons {
 
         public boolean isVisible() {
             return this.visible;
+        }
+
+        /**
+         * checks if the button was pushed while status was off
+         * This will return 'true' only once while the button is animated to full 'on' state
+         * @return true iff the button was activated and the method was not called before during activation
+         */
+        public boolean isActivated() {
+            boolean r = this.activated;
+            activated = false;
+            return r;
+        }
+
+        /**
+         * checks if the button was pushed while status was on
+         * This will return 'true' only once while the button is animated to full 'off' state
+         * @return true iff the button was deactivated and the method was not called before during deactivation
+         */
+        public boolean isDeactivated() {
+            boolean r = this.deactivated;
+            this.deactivated = false;
+            return r;
         }
 
         public Button disable() {
@@ -186,7 +211,9 @@ public class Buttons {
             // change sign
             if (this.sign != 0) {
                 this.status = Math.max(0, Math.min(255, this.status + (int) (this.sign * 255000 / this.tt / this.sketch.frameRate)));
-                if (this.status == 0 || this.status == 255) this.sign = 0;
+                if (this.status == 0 || this.status == 255) {
+                    this.sign = 0;
+                }
             }
             if (this.visible) {
                 // draw button
@@ -257,7 +284,19 @@ public class Buttons {
 
         public void mousePressed(int x, int y) {
             if (this.visible && !this.disabled && inside(x, y)) {
-                if (this.sign == 0) this.sign = this.status == 0 ? 1 : -1; else this.sign = -this.sign;
+                if (this.sign == 0) {
+                    if (this.status == 0) {
+                        this.sign = 1;
+                        this.activated = true;
+                        this.deactivated = false;
+                    } else {
+                        this.sign = -1;
+                        this.activated = false;
+                        this.deactivated = true;
+                    }
+                } else {
+                    this.sign = -this.sign;
+                }
             }
         }
 
